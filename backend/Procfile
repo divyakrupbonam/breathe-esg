@@ -1,1 +1,1 @@
-web: gunicorn breathe-esg.wsgi:application
+web: gunicorn config.wsgi:application
