@@ -1,0 +1,4 @@
+scope,category,activity_date,activity_value,activity_unit
+Scope 1,diesel_liter,2026-05-01,100,liter
+Scope 2,electricity_kwh,2026-05-02,500,kwh
+Scope 3,flight_km,2026-05-03,1200,km

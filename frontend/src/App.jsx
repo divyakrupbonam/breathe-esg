@@ -1,122 +1,179 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
+import Login from "./Login";
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [records, setRecords] = useState([]);
+  const [file, setFile] = useState(null);
+  const [sourceType, setSourceType] = useState("SAP");
+
+  const [token, setToken] = useState(null);
+
+  // ✅ LOAD TOKEN ON FIRST LOAD
+  useEffect(() => {
+    const saved = localStorage.getItem("token");
+    setToken(saved);
+  }, []);
+
+  // ✅ FETCH DATA AFTER LOGIN
+  useEffect(() => {
+    if (token) {
+      fetchRecords(token);
+    }
+  }, [token]);
+
+  const fetchRecords = async (authToken) => {
+    try {
+      const response = await axios.get(
+        "http://127.0.0.1:8000/api/emissions/",
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`
+          }
+        }
+      );
+
+      setRecords(response.data);
+    } catch (err) {
+      console.log("Fetch error:", err);
+    }
+  };
+
+  const approveRecord = async (id) => {
+    await axios.post(
+      `http://127.0.0.1:8000/api/emissions/${id}/approve/`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    fetchRecords(token);
+  };
+
+  const uploadFile = async () => {
+
+    if (!file) {
+      alert("Please select a file");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("source_type", sourceType);
+    formData.append("company_id", 1);
+
+    await axios.post(
+      "http://127.0.0.1:8000/api/ingestion/upload/",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    alert("Upload successful");
+    fetchRecords(token);
+  };
+
+  // ✅ LOGIN SCREEN
+  if (!token) {
+    return <Login setToken={setToken} />;
+  }
+
+  const chartData = records.map((r) => ({
+    name: r.category,
+    co2e: r.co2e_emission
+  }));
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{ padding: "20px" }}>
 
-      <div className="ticks"></div>
+      <h1>Breathe ESG Dashboard</h1>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <h2>Upload ESG Data</h2>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <input
+        type="file"
+        onChange={(e) => setFile(e.target.files[0])}
+      />
+
+      <br /><br />
+
+      <select
+        value={sourceType}
+        onChange={(e) => setSourceType(e.target.value)}
+      >
+        <option value="SAP">SAP</option>
+        <option value="UTILITY">UTILITY</option>
+        <option value="TRAVEL">TRAVEL</option>
+      </select>
+
+      <br /><br />
+
+      <button onClick={uploadFile}>
+        Upload Data
+      </button>
+
+      <hr />
+
+      <h2>Emissions Chart</h2>
+
+      <BarChart width={600} height={300} data={chartData}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="co2e" />
+      </BarChart>
+
+      <hr />
+
+      <h2>Emission Records</h2>
+
+      <table border="1" cellPadding="10">
+
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Category</th>
+            <th>Scope</th>
+            <th>CO2e</th>
+            <th>Status</th>
+            <th>Flagged</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {records.map((record) => (
+            <tr key={record.id}>
+              <td>{record.id}</td>
+              <td>{record.category}</td>
+              <td>{record.scope}</td>
+              <td>{record.co2e_emission}</td>
+              <td>{record.status}</td>
+              <td>{record.is_flagged ? "Yes" : "No"}</td>
+
+              <td>
+                {record.status !== "APPROVED" && (
+                  <button onClick={() => approveRecord(record.id)}>
+                    Approve
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+
+      </table>
+
+    </div>
+  );
 }
 
-export default App
+export default App;

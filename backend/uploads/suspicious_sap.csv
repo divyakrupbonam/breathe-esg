@@ -1,0 +1,3 @@
+scope,category,activity_date,activity_value,activity_unit
+Scope 1,diesel_liter,2026-05-01,-500,liter
+Scope 2,electricity_kwh,2026-05-02,999999,kwh
