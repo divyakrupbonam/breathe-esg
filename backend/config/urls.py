@@ -16,23 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-    path('api/ingestion/', include('ingestion.urls')),
 
-    path('api/emissions/', include('emissions.urls')),
-]
-
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-
+def health(request):
+    return JsonResponse({"status": "running"})
 
 
 urlpatterns = [
+    path('', health),
+
     path('admin/', admin.site.urls),
 
     path('api/token/', TokenObtainPairView.as_view()),
