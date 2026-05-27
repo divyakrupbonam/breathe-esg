@@ -27,7 +27,7 @@ function App() {
   const fetchRecords = async (authToken) => {
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8000/api/emissions/",
+        "https://breathe-esg-production-83b0.up.railway.app/api/emissions/",
         {
           headers: {
             Authorization: `Bearer ${authToken}`
@@ -43,7 +43,7 @@ function App() {
 
   const approveRecord = async (id) => {
     await axios.post(
-      `http://127.0.0.1:8000/api/emissions/${id}/approve/`,
+      `https://breathe-esg-production-83b0.up.railway.app/api/emissions/${id}/approve/`,
       {},
       {
         headers: {
@@ -68,7 +68,7 @@ function App() {
     formData.append("company_id", 1);
 
     await axios.post(
-      "http://127.0.0.1:8000/api/ingestion/upload/",
+      "https://breathe-esg-production-83b0.up.railway.app/api/ingestion/upload/",
       formData,
       {
         headers: {
