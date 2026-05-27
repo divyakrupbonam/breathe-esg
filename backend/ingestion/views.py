@@ -1,17 +1,15 @@
 import pandas as pd
-
 from datetime import datetime
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from .models import DataSource
 from companies.models import Company
 from emissions.models import EmissionRecord
-
 from .utils import normalize_unit, calculate_emission
 
 
@@ -33,7 +31,10 @@ class UploadCSVView(APIView):
             if not company_id:
                 return Response({"error": "company_id missing"}, status=400)
 
-            company = Company.objects.get(id=int(company_id))
+            try:
+                company = Company.objects.get(id=int(company_id))
+            except:
+                return Response({"error": "Invalid company_id"}, status=400)
 
             datasource = DataSource.objects.create(
                 company=company,
@@ -44,45 +45,62 @@ class UploadCSVView(APIView):
 
             df = pd.read_csv(file)
 
-            created_records = []
+            created_records = 0
 
             for _, row in df.iterrows():
-                value = float(row.get('activity_value', 0))
-                unit = str(row.get('activity_unit', ''))
 
-                normalized_value, normalized_unit = normalize_unit(value, unit)
+                try:
+                    value = float(row.get('activity_value', 0))
+                    unit = str(row.get('activity_unit', ''))
 
-                factor, co2e = calculate_emission(
-                    row.get('category', ''),
-                    normalized_value
-                )
+                    # ---- SAFE DATE PARSING ----
+                    date_raw = row.get('activity_date')
+                    try:
+                        activity_date = datetime.strptime(
+                            str(date_raw),
+                            "%Y-%m-%d"
+                        ).date()
+                    except:
+                        continue
 
-                flagged = value < 0 or value > 10000
+                    normalized_value, normalized_unit = normalize_unit(value, unit)
 
-                EmissionRecord.objects.create(
-                    company=company,
-                    source=datasource,
-                    scope=row.get('scope', ''),
-                    category=row.get('category', ''),
-                    activity_date=datetime.strptime(str(row.get('activity_date')), "%Y-%m-%d").date(),
-                    activity_value=value,
-                    activity_unit=unit,
-                    normalized_value=normalized_value,
-                    normalized_unit=normalized_unit,
-                    emission_factor=factor,
-                    co2e_emission=co2e,
-                    is_flagged=flagged,
-                    flag_reason="Suspicious activity value" if flagged else "",
-                    raw_data=row.to_dict()
-                )
-                
+                    factor, co2e = calculate_emission(
+                        row.get('category', ''),
+                        normalized_value
+                    )
+
+                    flagged = value < 0 or value > 10000
+
+                    EmissionRecord.objects.create(
+                        company=company,
+                        source=datasource,
+                        scope=row.get('scope', ''),
+                        category=row.get('category', ''),
+                        activity_date=activity_date,
+                        activity_value=value,
+                        activity_unit=unit,
+                        normalized_value=normalized_value,
+                        normalized_unit=normalized_unit,
+                        emission_factor=factor,
+                        co2e_emission=co2e,
+                        is_flagged=flagged,
+                        flag_reason="Suspicious activity value" if flagged else "",
+                        raw_data=row.to_dict()
+                    )
+
+                    created_records += 1
+
+                except Exception as e:
+                    print("ROW ERROR:", e)
+                    continue
 
             datasource.status = 'COMPLETED'
             datasource.save()
 
             return Response({
                 "message": "Upload successful",
-                "records_created": len(created_records)
+                "records_created": created_records
             })
 
         except Exception as e:
