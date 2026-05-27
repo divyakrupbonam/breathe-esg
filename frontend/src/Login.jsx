@@ -9,7 +9,7 @@ function Login({ setToken }) {
   const login = async () => {
     try {
       const res = await axios.post(
-        "https://breathe-esg-production-83b0.up.railway.app/api/token/",
+        "https://breathe-esg-production-d49f.up.railway.app/api/token/",
         { username, password }
       );
 
