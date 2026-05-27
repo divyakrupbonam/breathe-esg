@@ -152,7 +152,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://breathe-esg-production-83b0.up.railway.app",
+    "https://breathe-esg-production-d49f.up.railway.app/admin",
     "https://breathe-gtjxbeaes-divyas-projects-1b7373ac.vercel.app"
 ]
 
