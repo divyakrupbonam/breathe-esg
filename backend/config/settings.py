@@ -28,6 +28,7 @@ DEBUG = False
 # ALLOWED_HOSTS = ["*"]
 ALLOWED_HOSTS = [
     "breathe-esg-production-83b0.up.railway.app",
+    ".railway.app",
     "localhost",
     "127.0.0.1"
 ]
@@ -148,8 +149,9 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://breathe-esg-production-d49f.up.railway.app/admin",
