@@ -57,10 +57,12 @@ function App() {
 
   const uploadFile = async () => {
 
-    if (!file) {
-      alert("Please select a file");
-      return;
-    }
+  console.log(token);
+
+  if (!file) {
+    alert("Please select a file");
+    return;
+  }
 
     const formData = new FormData();
     formData.append("file", file);
